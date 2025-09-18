@@ -1,58 +1,102 @@
 <script setup>
 import { ref, onMounted } from "vue";
-const emit = defineEmits(["select"]);
+import TreeSelect from "primevue/treeselect";
+import Skeleton from "primevue/skeleton";
 
-const path = "Autó, motor>Személygépkocsi abroncs";
+const emit = defineEmits(["select", "path-change"]);
+
+const value = ref(null);
+const nodes = ref([]);
 const loading = ref(true);
-const error = ref("");
-const categories = ref([]);
 
-async function load() {
+function hasKids(c) {
+    if (typeof c.hasChildren === "boolean") return c.hasChildren;
+    if (typeof c.children_count === "number") return c.children_count > 0;
+    if (Array.isArray(c.children)) return c.children.length > 0;
+    return false;
+}
+
+function toNode(c, parentPath = "") {
+    const path = parentPath ? `${parentPath}>${c.name}` : c.name;
+    const node = {
+        key: String(c.id),
+        label: c.name,
+        data: { id: c.id, path },
+    };
+
+    if (hasKids(c)) {
+        node.children = [];
+        node.leaf = false;
+    } else {
+        node.children = null;
+        node.leaf = true;
+    }
+
+    return node;
+}
+
+async function loadRoot() {
     loading.value = true;
     try {
-        const url = `/api/categories/branch?path=${encodeURIComponent(path)}`;
-        const res = await fetch(url);
+        const res = await fetch("/api/categories/branch");
         const data = await res.json();
-        categories.value = data.children ?? [];
-    } catch (e) {
-        error.value = "Nem sikerült betölteni a kategóriákat.";
+        nodes.value = (data.children ?? []).map((c) => toNode(c, ""));
     } finally {
         loading.value = false;
     }
 }
 
-function selectCategory(id) {
-    emit("select", id);
+async function onNodeExpand(event) {
+    const node = event.node;
+    if (node.children && node.children.length === 0 && !node.leaf) {
+        const res = await fetch(
+            `/api/categories/branch?path=${encodeURIComponent(node.data.path)}`
+        );
+        const data = await res.json();
+        node.children = (data.children ?? []).map((c) =>
+            toNode(c, node.data.path)
+        );
+    }
 }
 
-onMounted(load);
+function onChange(e) {
+    const node = findNodeByKey(nodes.value, e.value);
+    if (node) {
+        emit("select", node.data.id);
+        emit("path-change", node.data.path);
+    }
+}
+
+function findNodeByKey(list, key) {
+    for (const n of list) {
+        if (n.key === key) return n;
+        if (n.children?.length) {
+            const f = findNodeByKey(n.children, key);
+            if (f) return f;
+        }
+    }
+    return null;
+}
+
+onMounted(loadRoot);
 </script>
 
 <template>
-    <div class="bg-white rounded-2xl border shadow-sm">
-        <details open class="p-4">
-            <summary class="cursor-pointer text-lg font-semibold">
-                Autó, motor → Személygépkocsi abroncs
-            </summary>
+    <div class="w-full">
+        <div class="text-lg font-semibold mb-2">Kategóriák</div>
 
-            <div class="mt-4">
-                <div v-if="loading" class="text-sm text-gray-500">
-                    Betöltés…
-                </div>
-                <div v-else-if="error" class="text-sm text-red-600">
-                    {{ error }}
-                </div>
-                <ul v-else class="grid grid-cols-2 md:grid-cols-1 gap-2">
-                    <li v-for="c in categories" :key="c.id">
-                        <button
-                            class="w-full text-left px-3 py-2 rounded hover:bg-gray-50 border"
-                            @click="selectCategory(c.id)"
-                        >
-                            {{ c.name }}
-                        </button>
-                    </li>
-                </ul>
-            </div>
-        </details>
+        <Skeleton v-if="loading" height="3rem" class="mb-2" />
+
+        <TreeSelect
+            v-else
+            v-model="value"
+            :options="nodes"
+            placeholder="Válassz kategóriát..."
+            selectionMode="single"
+            class="w-full"
+            :showClear="true"
+            @change="onChange"
+            @node-expand="onNodeExpand"
+        />
     </div>
 </template>

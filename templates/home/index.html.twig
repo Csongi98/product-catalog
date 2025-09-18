@@ -1,5 +1,11 @@
 {% extends 'base.html.twig' %}
 {% block title %}Főoldal{% endblock %}
+
 {% block body %}
-  <h1 class="text-2xl font-bold">Üdv a Product Catalogban 🚀</h1>
+  <div id="home-app"></div>
+{% endblock %}
+
+{% block vue %}
+  {{ vite_entry_link_tags('app') }}
+  {{ vite_entry_script_tags('app') }}
 {% endblock %}

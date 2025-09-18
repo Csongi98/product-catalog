@@ -1,19 +1,11 @@
 {% extends 'base.html.twig' %}
-
-{% block title %}Kategóriák{% endblock %}
+{% block title %}Termékek{% endblock %}
 
 {% block body %}
-  <h1 class="text-2xl font-bold mb-6">Kategóriák</h1>
-  <ul class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-    {% for c in categories %}
-      <li>
-        <a class="block p-3 bg-white rounded shadow hover:shadow-md" 
-           href="{{ path('category_show', {id: c.id}) }}">
-          {{ c.name }}
-        </a>
-      </li>
-    {% else %}
-      <li>Nincsenek kategóriák.</li>
-    {% endfor %}
-  </ul>
+  <div id="catalog-app"></div>
+{% endblock %}
+
+{% block vue %}
+  {{ vite_entry_link_tags('app') }}
+  {{ vite_entry_script_tags('app') }}
 {% endblock %}

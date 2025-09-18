@@ -64,7 +64,12 @@
         ],
         "post-update-cmd": [
             "@auto-scripts"
-        ]
+        ],
+        "test-db": [
+            "php bin/console doctrine:database:create --env=test --if-not-exists",
+            "php bin/console doctrine:migrations:migrate -n --env=test"
+        ],
+        "phpunit": "php bin/phpunit"
     },
     "conflict": {
         "symfony/symfony": "*"

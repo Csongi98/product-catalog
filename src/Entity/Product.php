@@ -25,7 +25,7 @@ class Product
     private ?string $name = null;
 
     #[ORM\Column]
-    private ?int $price = null; // fillérben tároljuk
+    private ?int $price = null;
 
     #[ORM\Column(nullable: true)]
     private ?int $netPrice = null;
