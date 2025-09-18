@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ category.name }}{% endblock %}
+
+{% block body %}
+  <h1 class="text-2xl font-bold mb-6">{{ category.name }}</h1>
+
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    {% for p in products %}
+      <a href="{{ path('product_show', {id: p.id}) }}" 
+         class="block bg-white p-4 rounded shadow hover:shadow-md">
+        {% if p.imageUrl %}
+          <img src="{{ p.imageUrl }}" alt="{{ p.name }}" 
+               class="w-full h-40 object-cover rounded mb-3">
+        {% endif %}
+        <div class="font-medium">{{ p.name }}</div>
+        <div class="text-sm text-gray-600">
+          {{ (p.price / 100)|number_format(0, '.', ' ') }} Ft
+        </div>
+      </a>
+    {% else %}
+      <p>Ebben a kategóriában nincs termék.</p>
+    {% endfor %}
+  </div>
+
+  {% if lastPage > 1 %}
+    <div class="flex gap-2 mt-8">
+      {% for i in 1..lastPage %}
+        <a href="{{ path('category_show', {id: category.id, page: i}) }}"
+           class="px-3 py-1 rounded border 
+                  {{ i == page ? 'bg-gray-900 text-white' : 'bg-white hover:bg-gray-100' }}">
+          {{ i }}
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endblock %}

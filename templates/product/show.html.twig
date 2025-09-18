@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ product.name }}{% endblock %}
+
+{% block body %}
+  <div class="bg-white p-6 rounded shadow">
+    {% if product.imageUrl %}
+      <img src="{{ product.imageUrl }}" alt="{{ product.name }}" 
+           class="w-full max-w-md mx-auto mb-6">
+    {% endif %}
+
+    <h1 class="text-2xl font-bold mb-4">{{ product.name }}</h1>
+    <p class="mb-4 text-gray-600">{{ product.description }}</p>
+
+    <div class="text-lg font-semibold mb-2">
+      Ár: {{ (product.price / 100)|number_format(0, '.', ' ') }} Ft
+    </div>
+
+    {% if product.netPrice %}
+      <div class="text-sm text-gray-500">
+        Nettó ár: {{ (product.netPrice / 100)|number_format(0, '.', ' ') }} Ft
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}
