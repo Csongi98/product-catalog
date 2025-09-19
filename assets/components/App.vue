@@ -1,8 +1,13 @@
 <script setup>
 import Menubar from "primevue/menubar";
-import { useRouter } from "vue-router";
+import Button from "primevue/button";
+import Badge from "primevue/badge";
+import { useRouter, RouterView, RouterLink } from "vue-router";
+import { useCart } from "../composables/useCart";
+import Toast from "primevue/toast";
 
 const router = useRouter();
+const { count } = useCart();
 
 const items = [
     {
@@ -12,7 +17,7 @@ const items = [
     },
     {
         label: "Termékek",
-        icon: "pi pi-shopping-cart",
+        icon: "pi pi-list",
         command: () => router.push({ name: "catalog" }),
     },
 ];
@@ -20,9 +25,24 @@ const items = [
 
 <template>
     <div>
-        <Menubar :model="items" class="shadow-sm" />
+        <Menubar :model="items" class="shadow-sm">
+            <!-- Jobb oldal (kosár ikon) -->
+            <template #end>
+                <RouterLink to="/cart" class="relative">
+                    <Button icon="pi pi-shopping-cart" text rounded />
+                    <Badge
+                        v-if="count"
+                        :value="count"
+                        severity="danger"
+                        class="absolute -top-2 -right-2"
+                    />
+                </RouterLink>
+            </template>
+        </Menubar>
+
         <main class="p-6">
             <RouterView />
         </main>
+        <Toast />
     </div>
 </template>

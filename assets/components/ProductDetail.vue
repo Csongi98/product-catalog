@@ -69,6 +69,7 @@
                             <Button
                                 icon="pi pi-shopping-cart"
                                 label="Kosárba"
+                                @click="addToCart(p)"
                             />
                             <Button
                                 icon="pi pi-heart"
@@ -118,6 +119,11 @@ import Button from "primevue/button";
 import Image from "primevue/image";
 import Skeleton from "primevue/skeleton";
 import Message from "primevue/message";
+import InputNumber from "primevue/inputnumber";
+import { useCart } from "../composables/useCart";
+
+const { add } = useCart();
+const qty = ref(1);
 
 const route = useRoute();
 const toast = useToast();
@@ -131,6 +137,16 @@ function toFt(cents) {
     return (
         new Intl.NumberFormat("hu-HU").format(Math.round(cents / 100)) + " Ft"
     );
+}
+
+function addToCart(product) {
+    add(product, 1);
+    toast.add({
+        severity: "success",
+        summary: "Kosár",
+        detail: `"${product.name}" hozzáadva a kosárhoz.`,
+        life: 3000,
+    });
 }
 
 async function load() {

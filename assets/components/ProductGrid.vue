@@ -9,10 +9,14 @@ import Tag from "primevue/tag";
 import Rating from "primevue/rating";
 import Skeleton from "primevue/skeleton";
 import { RouterLink } from "vue-router";
+import { useCart } from "../composables/useCart";
 
 const props = defineProps({
     categoryId: { type: [Number, String], default: null },
 });
+
+const { add } = useCart();
+const qty = ref(1);
 
 const items = ref([]);
 const total = ref(0);
@@ -59,6 +63,16 @@ function buildSortParams(key) {
         default:
             return null;
     }
+}
+
+function addToCart(product) {
+    add(product, 1);
+    toast.add({
+        severity: "success",
+        summary: "Kosár",
+        detail: `"${product.name}" hozzáadva a kosárhoz.`,
+        life: 3000,
+    });
 }
 
 let t = null;
@@ -190,7 +204,6 @@ const rowsPerPageOptions = [12, 20, 36, 48];
                     class="w-40"
                 />
 
-                <!-- rendezés -->
                 <Dropdown
                     v-model="sortKey"
                     :options="sortOptions"
@@ -220,7 +233,6 @@ const rowsPerPageOptions = [12, 20, 36, 48];
                 <Button label="Próbáld újra" text @click="load" />
             </div>
 
-            <!-- Skeleton -->
             <div v-else-if="loading" class="flex flex-col gap-3">
                 <div
                     v-for="i in 6"
@@ -242,12 +254,10 @@ const rowsPerPageOptions = [12, 20, 36, 48];
                 </div>
             </div>
 
-            <!-- Üres -->
             <div v-else-if="!items.length" class="text-sm text-slate-500">
                 Nincs találat.
             </div>
 
-            <!-- LISTA NÉZET -->
             <DataView
                 v-else
                 :value="items"
@@ -272,7 +282,7 @@ const rowsPerPageOptions = [12, 20, 36, 48];
                         <div
                             v-for="p in slotProps.items"
                             :key="p.id"
-                            class="bg-white rounded-2xl border p-3 hover:shadow-sm transition"
+                            class="bg-white rounded-2xl border p-3 hover:shadow-sm transition flex justify-between"
                         >
                             <RouterLink
                                 :to="{ name: 'product', params: { id: p.id } }"
@@ -315,12 +325,22 @@ const rowsPerPageOptions = [12, 20, 36, 48];
                                         />
                                     </div>
                                 </div>
+                            </RouterLink>
+                            <div
+                                class="flex flex-col items-center justify-evenly"
+                            >
                                 <div
-                                    class="text-right font-semibold text-gray-800 self-center"
+                                    class="text-right font-semibold text-gray-800"
                                 >
                                     {{ toFt(p.price) }}
                                 </div>
-                            </RouterLink>
+                                <Button
+                                    icon="pi pi-shopping-cart"
+                                    label="Kosárba"
+                                    @click="addToCart(p)"
+                                    class="h-10"
+                                />
+                            </div>
                         </div>
                     </div>
                 </template>
