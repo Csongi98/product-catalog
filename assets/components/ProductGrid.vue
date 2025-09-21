@@ -10,12 +10,14 @@ import Rating from "primevue/rating";
 import Skeleton from "primevue/skeleton";
 import { RouterLink } from "vue-router";
 import { useCart } from "../composables/useCart";
+import { useToast } from "primevue/usetoast";
 
 const props = defineProps({
     categoryId: { type: [Number, String], default: null },
 });
 
 const { add } = useCart();
+const toast = useToast();
 const qty = ref(1);
 
 const items = ref([]);

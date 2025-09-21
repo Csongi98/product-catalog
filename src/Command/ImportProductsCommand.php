@@ -66,10 +66,8 @@ class ImportProductsCommand extends Command
             return Command::FAILURE;
         }
 
-        // --- 1) Az első sort TELJESEN kihagyjuk (A1-ben csak cím van)
-        $discard = fgetcsv($handle, 0, $del); // ignore header row completely
+        $discard = fgetcsv($handle, 0, $del);
 
-        // --- Import tranzakció
         $this->em->getConnection()->beginTransaction();
         $repoProduct  = $this->em->getRepository(Product::class);
         $repoCategory = $this->em->getRepository(Category::class);
@@ -80,21 +78,13 @@ class ImportProductsCommand extends Command
         $skippedInvalid   = 0;
 
         try {
-            // 2. sortól dolgozunk
             while (($raw = fgetcsv($handle, 0, $del)) !== false) {
-                // Sor összefűzése intelligensen: közé ; ha hiányzik
                 $line = $this->joinCellsWithDelimiter($raw, $del);
-                // BOM le:
                 $line = preg_replace('/^\xEF\xBB\xBF/', '', $line);
 
-                // ; szerinti bontás
                 $row  = array_map('trim', explode($del, $line));
-                // legyen pontosan 7 mező
                 $row  = array_pad($row, 7, null);
 
-                // elvárt sorrend:
-                // 0 identifier, 1 name, 2 category_id, 3 category (breadcrumb),
-                // 4 price, 5 net_price, 6 image_url
                 $identifier    = $row[0] ?? null;
                 $name          = $row[1] ?? null;
                 $catBreadcrumb = $row[3] ?? null;
@@ -107,24 +97,20 @@ class ImportProductsCommand extends Command
                     continue;
                 }
 
-                // duplikáció: identifier egyedi
                 if ($repoProduct->findOneBy(['identifier' => $identifier])) {
                     $skippedDuplicate++;
                     continue;
                 }
 
-                // --- kategóriafa felépítése breadcrumbból ---
                 $parts = $this->breadcrumbToParts((string)$catBreadcrumb);
                 $leafCategory = $this->findOrCreateCategoryChain($parts, $repoCategory);
                 if (!$leafCategory) {
                     $leafCategory = $this->findOrCreateCategoryChain(['Ismeretlen'], $repoCategory);
                 }
 
-                // --- árak normalizálása (Ft -> fillér) ---
                 $priceCents = $this->toCents($price);
                 $netCents   = ($netPrice !== null && $netPrice !== '') ? $this->toCents($netPrice) : null;
 
-                // --- termék ---
                 $p = new Product();
                 $p->setIdentifier((string)$identifier);
                 $p->setName((string)$name);
@@ -142,7 +128,6 @@ class ImportProductsCommand extends Command
                 $createdProducts++;
                 $processed++;
 
-                // batch flush 200-asával
                 if ($processed % 200 === 0 && !$dry) {
                     $this->em->flush();
                     $this->em->clear();
@@ -179,10 +164,6 @@ class ImportProductsCommand extends Command
         }
     }
 
-    /**
-     * Egy teljes sor celláin végigmegy, és egymás után fűzi őket.
-     * Ha két cella határán hiányzik a pontosvessző, beszúr egyet.
-     */
     private function joinCellsWithDelimiter(array $cells, string $del = ';'): string
     {
         $out = '';
@@ -191,14 +172,12 @@ class ImportProductsCommand extends Command
         foreach ($cells as $cell) {
             $cell = (string)$cell;
             if ($first) {
-                // első cella: csak BOM-ot szedjük le az elejéről
                 $cell = preg_replace('/^\xEF\xBB\xBF/', '', $cell);
                 $out = $cell;
                 $first = false;
                 continue;
             }
 
-            // kell-e delimiter a határra?
             $needDel = true;
             if ($out !== '' && str_ends_with($out, $del)) {
                 $needDel = false;
@@ -210,13 +189,13 @@ class ImportProductsCommand extends Command
             if ($needDel) {
                 $out .= $del;
             }
-            $out .= ltrim($cell, " \t\r\n"); // bal oldali whitespace le
+            $out .= ltrim($cell, " \t\r\n");
         }
 
         return trim($out);
     }
 
-    /** "Autó, motor > Személygépkocsi abroncs > Barum" -> ["Autó, motor","Személygépkocsi abroncs","Barum"] */
+
     private function breadcrumbToParts(?string $breadcrumb): array
     {
         if (!$breadcrumb) {
@@ -227,10 +206,7 @@ class ImportProductsCommand extends Command
         return $parts ?: ['Ismeretlen'];
     }
 
-    /**
-     * Végigmegy a részeken és (parent, name) alapján keres/létrehoz Category-t.
-     * Visszaadja a LEVÉL node-ot (ehhez kötjük a terméket).
-     */
+
     private function findOrCreateCategoryChain(array $parts, $repoCategory): ?Category
     {
         $parent = null;
@@ -258,14 +234,14 @@ class ImportProductsCommand extends Command
         return $parent;
     }
 
-    /** "12 345,67" → 1234567 (fillér) */
+
     private function toCents(null|string|int|float $value): int
     {
         if ($value === null || $value === '') {
             return 0;
         }
         $s = (string) $value;
-        $s = str_replace(["\u{00A0}", ' '], '', $s); // nem törhető + normál space
+        $s = str_replace(["\u{00A0}", ' '], '', $s);
         $s = str_replace(',', '.', $s);
         $f = (float) $s;
         return (int) round($f * 100);

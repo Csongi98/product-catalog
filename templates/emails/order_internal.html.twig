@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <title>Új rendelés</title>
+</head>
+<body>
+    <h2>Új rendelés érkezett</h2>
+
+    <p><strong>Rendelésszám:</strong> {{ orderNo }}</p>
+    <p><strong>Végösszeg:</strong> {{ o.total|number_format(0, '.', ' ') }} Ft</p>
+
+    <h3>Vásárló adatai</h3>
+    <ul>
+        <li><strong>Név:</strong> {{ o.name }}</li>
+        <li><strong>Cím:</strong> {{ o.zip }} {{ o.city }}, {{ o.address }}</li>
+        <li><strong>Telefon:</strong> {{ o.phone }}</li>
+        <li><strong>E-mail:</strong> {{ o.email }}</li>
+    </ul>
+
+    <h3>Rendelt termékek</h3>
+    <table border="1" cellspacing="0" cellpadding="6" width="100%">
+        <thead>
+        <tr>
+            <th align="left">Termék</th>
+            <th align="right">Ár</th>
+            <th align="right">Mennyiség</th>
+            <th align="right">Összeg</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in o.items %}
+            <tr>
+                <td>{{ item.name }}</td>
+                <td align="right">{{ item.price|number_format(0, '.', ' ') }} Ft</td>
+                <td align="right">{{ item.qty }}</td>
+                <td align="right">{{ (item.price * item.qty)|number_format(0, '.', ' ') }} Ft</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
