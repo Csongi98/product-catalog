@@ -1,5 +1,5 @@
 <template>
-    <div class="container mx-auto px-4">
+    <div class="">
         <div class="flex items-center gap-3 py-4">
             <h1 class="text-xl md:text-2xl font-semibold w-full text-center">
                 Termékek

@@ -69,15 +69,14 @@ async function submit() {
         return;
     }
 
-    if (!items.value.length) {
-        err.value = "A kosár üres.";
-        return;
-    }
     loading.value = true;
     try {
         const res = await fetch("/api/checkout", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "application/ld+json",
+            },
             body: JSON.stringify({
                 name: name.value,
                 email: email.value,
@@ -100,7 +99,9 @@ async function submit() {
                 err.value = data.errors
                     .map((e) => `${e.field}: ${e.msg}`)
                     .join(", ");
-            } else err.value = "Nem sikerült leadni a rendelést.";
+            } else {
+                err.value = "Nem sikerült leadni a rendelést.";
+            }
             return;
         }
         const data = await res.json();
@@ -112,6 +113,12 @@ async function submit() {
             life: 4000,
         });
         clear();
+        name.value = "";
+        email.value = "";
+        zip.value = "";
+        city.value = "";
+        address.value = "";
+        phone.value = "";
     } catch {
         err.value = "Hálózati hiba.";
     } finally {
@@ -133,7 +140,10 @@ async function submit() {
             <Card class="rounded-2xl w-full">
                 <template #title>Vásárlói adatok</template>
                 <template #content>
-                    <div class="w-full flex flex-col gap-5 pt-4">
+                    <form
+                        @submit.prevent="submit"
+                        class="w-full flex flex-col gap-5 pt-4"
+                    >
                         <FloatLabel>
                             <InputText
                                 id="name"
@@ -183,15 +193,15 @@ async function submit() {
                             />
                             <label for="phone">Telefonszám</label>
                         </FloatLabel>
-                    </div>
 
-                    <Divider />
-                    <Button
-                        :loading="loading"
-                        label="Rendelés leadása"
-                        icon="pi pi-check"
-                        @click="submit"
-                    />
+                        <Divider />
+                        <Button
+                            :loading="loading"
+                            label="Rendelés leadása"
+                            icon="pi pi-check"
+                            type="submit"
+                        />
+                    </form>
                 </template>
             </Card>
         </div>
@@ -221,7 +231,7 @@ async function submit() {
                             class="flex items-center justify-between text-lg font-semibold"
                         >
                             <span>Végösszeg</span>
-                            <span>{{ toFt(total) }}</span>
+                            <span>{{ toFt(total.value) }}</span>
                         </div>
                     </div>
                 </template>

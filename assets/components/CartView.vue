@@ -12,7 +12,7 @@ const { items, remove, setQty, clear, total } = useCart();
 
 <template>
     <div class="max-w-5xl mx-auto space-y-4">
-        <h1 class="text-2xl font-semibold">Kosár</h1>
+        <h1 class="text-2xl font-semibold text-center pt-4">Kosár</h1>
 
         <Message v-if="!items.length" severity="info">
             A kosár üres.
@@ -21,19 +21,21 @@ const { items, remove, setQty, clear, total } = useCart();
             >
         </Message>
 
-        <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div v-else class="flex flex-col gap-4">
             <div class="lg:col-span-2 space-y-3">
                 <Card
                     v-for="it in items"
                     :key="it.id"
-                    class="rounded-2xl flex justify-between gap-4"
+                    class="rounded-2xl flex justify-between sm:gap-4"
                 >
                     <template #content>
-                        <div class="flex items-center justify-betweenm gap-4">
+                        <div
+                            class="flex max-sm:flex-col items-center justify-betweenm gap-4"
+                        >
                             <img
                                 v-if="it.imageUrl"
                                 :src="it.imageUrl"
-                                class="w-20 h-20 object-cover rounded"
+                                class="w-20 h-20 object-cover rounded max-sm:w-44 max-sm:h-44"
                             />
                             <div class="flex-1 min-w-0">
                                 <RouterLink
@@ -51,7 +53,7 @@ const { items, remove, setQty, clear, total } = useCart();
                             </div>
 
                             <div
-                                class="flex items-center gap-3 justify-between"
+                                class="flex items-center sm:gap-3 justify-between"
                             >
                                 <InputNumber
                                     :modelValue="it.qty"

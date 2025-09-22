@@ -11,6 +11,7 @@ import Skeleton from "primevue/skeleton";
 import { RouterLink } from "vue-router";
 import { useCart } from "../composables/useCart";
 import { useToast } from "primevue/usetoast";
+import { useRoute, useRouter } from "vue-router";
 
 const props = defineProps({
     categoryId: { type: [Number, String], default: null },
@@ -31,6 +32,40 @@ const q = ref("");
 const qDebounced = ref("");
 const season = ref("");
 const diameter = ref(null);
+
+const route = useRoute();
+const router = useRouter();
+
+const isApplyingFromQuery = ref(false);
+
+function applyFromQuery() {
+    isApplyingFromQuery.value = true;
+
+    q.value = (route.query.search ?? "").toString();
+    qDebounced.value = q.value;
+    season.value = (route.query.season ?? "").toString();
+    diameter.value = route.query.diameter ? Number(route.query.diameter) : null;
+    sortKey.value = (route.query.sortKey ?? "relevance").toString();
+    rows.value = route.query.perPage ? Number(route.query.perPage) : rows.value;
+    page.value = route.query.page
+        ? Math.max(0, Number(route.query.page) - 1)
+        : 0;
+
+    isApplyingFromQuery.value = false;
+}
+
+function stateToQuery() {
+    const qobj = {
+        search: qDebounced.value || undefined,
+        season: season.value || undefined,
+        diameter: diameter.value || undefined,
+        sortKey: sortKey.value || undefined,
+        perPage: rows.value || undefined,
+        page: page.value + 1,
+    };
+    if (props.categoryId) qobj["category.id"] = String(props.categoryId);
+    return qobj;
+}
 
 const seasonOptions = [
     { label: "Összes évszak", value: "" },
@@ -55,15 +90,16 @@ const sortKey = ref("relevance");
 function buildSortParams(key) {
     switch (key) {
         case "name_asc":
-            return { sort: "name", dir: "asc" };
+            return { order: { name: "asc" } };
         case "name_desc":
-            return { sort: "name", dir: "desc" };
+            return { order: { name: "desc" } };
         case "price_asc":
-            return { sort: "price", dir: "asc" };
+            return { order: { price: "asc" } };
         case "price_desc":
-            return { sort: "price", dir: "desc" };
+            return { order: { price: "desc" } };
+        case "relevance":
         default:
-            return null;
+            return { sort: "relevance" };
     }
 }
 
@@ -83,9 +119,18 @@ watch(q, (v) => {
     t = setTimeout(() => {
         qDebounced.value = v.trim();
         page.value = 0;
-        load();
+        router.replace({ query: stateToQuery() });
     }, 350);
 });
+
+watch(
+    () => route.query,
+    () => {
+        applyFromQuery();
+        load();
+    },
+    { deep: true }
+);
 
 function toFt(cents) {
     if (cents == null) return "";
@@ -122,45 +167,79 @@ async function load() {
         const params = new URLSearchParams({
             page: String(page.value + 1),
             perPage: String(rows.value),
+            itemsPerPage: String(rows.value),
         });
-        if (props.categoryId)
-            params.set("categoryId", String(props.categoryId));
-        if (qDebounced.value) params.set("search", qDebounced.value);
 
+        if (props.categoryId)
+            params.set("category.id", String(props.categoryId));
+        if (qDebounced.value) params.set("search", qDebounced.value);
         if (season.value) params.set("season", season.value);
         if (diameter.value) params.set("diameter", String(diameter.value));
 
         const s = buildSortParams(sortKey.value);
-        if (s) {
-            params.set("sort", s.sort);
-            params.set("dir", s.dir);
+        if (s?.order) {
+            for (const [field, dir] of Object.entries(s.order)) {
+                params.set(`order[${field}]`, dir);
+            }
+        } else if (s?.sort === "relevance" && qDebounced.value) {
+            params.set("sort", "relevance");
         }
 
-        const res = await fetch(`/api/products?${params.toString()}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const url = `/api/products?${params.toString()}`;
+
+        const res = await fetch(url, {
+            headers: {
+                Accept: "application/ld+json",
+            },
+        });
+
+        if (!res.ok) {
+            let detail = `HTTP ${res.status}`;
+            try {
+                const err = await res.json();
+                if (err["hydra:description"])
+                    detail += ` — ${err["hydra:description"]}`;
+                if (err.detail) detail += ` — ${err.detail}`;
+            } catch {}
+            throw new Error(detail);
+        }
+
         const data = await res.json();
 
-        let pageItems = data.items ?? [];
-        total.value = data.total ?? 0;
+        const pageItems =
+            data["hydra:member"] ?? data.member ?? data["@graph"] ?? [];
 
-        if (s) pageItems = applyClientSort(pageItems);
+        const totalItems =
+            data["hydra:totalItems"] ??
+            data.totalItems ??
+            (Array.isArray(pageItems) ? pageItems.length : 0);
 
         items.value = pageItems;
+        total.value = Number.isFinite(totalItems) ? totalItems : 0;
     } catch (e) {
-        console.error(e);
+        console.error("Load products failed:", e);
         error.value = "Nem sikerült betölteni a termékeket.";
     } finally {
         loading.value = false;
     }
 }
 
-watch([() => props.categoryId, rows, page, sortKey, season, diameter], load, {
-    immediate: true,
-});
+watch(
+    [() => props.categoryId, rows, page, sortKey, season, diameter, qDebounced],
+    async () => {
+        if (isApplyingFromQuery.value) return; // <- important
+        await router.replace({ query: stateToQuery() });
+    }
+);
+
 watch(rows, () => {
     page.value = 0;
 });
-onMounted(load);
+
+onMounted(() => {
+    applyFromQuery();
+    load();
+});
 
 const sortOptions = [
     { label: "Relevancia", value: "relevance" },
@@ -178,13 +257,15 @@ const rowsPerPageOptions = [12, 20, 36, 48];
 <template>
     <Card class="rounded-2xl overflow-hidden">
         <template #title>
-            <div class="flex flex-wrap items-center gap-3 w-full">
+            <div
+                class="flex flex-wrap items-center gap-3 w-full max-sm:justify-center"
+            >
                 <span class="p-input-icon-left">
                     <i class="pi pi-search pr-2" />
                     <InputText
                         v-model="q"
                         placeholder="Keresés a termékekben…"
-                        class="w-64"
+                        class="w-64 max-sm:w-80"
                     />
                 </span>
 
@@ -194,7 +275,7 @@ const rowsPerPageOptions = [12, 20, 36, 48];
                     optionLabel="label"
                     optionValue="value"
                     placeholder="Évszak"
-                    class="w-48"
+                    class="w-48 max-sm:w-80"
                 />
 
                 <Dropdown
@@ -203,7 +284,7 @@ const rowsPerPageOptions = [12, 20, 36, 48];
                     optionLabel="label"
                     optionValue="value"
                     placeholder="Átmérő"
-                    class="w-40"
+                    class="w-40 max-sm:w-80"
                 />
 
                 <Dropdown
@@ -211,7 +292,7 @@ const rowsPerPageOptions = [12, 20, 36, 48];
                     :options="sortOptions"
                     optionLabel="label"
                     optionValue="value"
-                    class="w-56"
+                    class="w-56 max-sm:w-80"
                 />
 
                 <div class="ml-auto flex items-center gap-2">
@@ -271,7 +352,7 @@ const rowsPerPageOptions = [12, 20, 36, 48];
                 :totalRecords="total"
                 :paginatorTemplate="paginatorTemplate"
                 :rowsPerPageOptions="rowsPerPageOptions"
-                currentPageReportTemplate="Oldal {currentPage}/{totalPages} — Összesen {totalRecords}"
+                currentPageReportTemplate="{currentPage}/{totalPages}"
                 @page="
                     (e) => {
                         page = Math.floor(e.first / e.rows);
@@ -284,14 +365,18 @@ const rowsPerPageOptions = [12, 20, 36, 48];
                         <div
                             v-for="p in slotProps.items"
                             :key="p.id"
-                            class="bg-white rounded-2xl border p-3 hover:shadow-sm transition flex justify-between"
+                            class="bg-white rounded-2xl border p-3 hover:shadow-sm transition flex max-sm:flex-col justify-between"
                         >
                             <RouterLink
-                                :to="{ name: 'product', params: { id: p.id } }"
-                                class="flex gap-3"
+                                :to="{
+                                    name: 'product',
+                                    params: { id: p.id },
+                                    query: route.query,
+                                }"
+                                class="flex gap-3 max-sm:flex-col"
                             >
                                 <div
-                                    class="w-40 aspect-[4/3] rounded-xl overflow-hidden bg-gray-100 shrink-0"
+                                    class="sm:w-40 aspect-[4/3] rounded-xl overflow-hidden bg-gray-100 shrink-0"
                                 >
                                     <img
                                         v-if="p.imageUrl"
@@ -329,7 +414,7 @@ const rowsPerPageOptions = [12, 20, 36, 48];
                                 </div>
                             </RouterLink>
                             <div
-                                class="flex flex-col items-center justify-evenly"
+                                class="flex sm:flex-col items-center justify-evenly max-sm:pt-5"
                             >
                                 <div
                                     class="text-right font-semibold text-gray-800"

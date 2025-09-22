@@ -12,39 +12,39 @@
  * The "importmap:require" command can be used to add new entries to this file.
  */
 return [
-    'app' => [
-        'path' => './assets/app.js',
-        'entrypoint' => true,
-    ],
-    '@hotwired/stimulus' => [
-        'version' => '3.2.2',
-    ],
-    '@symfony/stimulus-bundle' => [
-        'path' => './vendor/symfony/stimulus-bundle/assets/dist/loader.js',
-    ],
-    'vue' => [
-        'version' => '3.5.21',
-        'package_specifier' => 'vue/dist/vue.esm-bundler.js',
-    ],
-    '@vue/runtime-dom' => [
-        'version' => '3.5.21',
-    ],
-    '@vue/compiler-dom' => [
-        'version' => '3.5.21',
-    ],
-    '@vue/shared' => [
-        'version' => '3.5.21',
-    ],
-    '@vue/runtime-core' => [
-        'version' => '3.5.21',
-    ],
-    '@vue/compiler-core' => [
-        'version' => '3.5.21',
-    ],
-    '@vue/reactivity' => [
-        'version' => '3.5.21',
-    ],
-    '@symfony/ux-vue' => [
-        'path' => './vendor/symfony/ux-vue/assets/dist/loader.js',
-    ],
+    // 'app' => [
+    //     'path' => './assets/app.js',
+    //     'entrypoint' => true,
+    // ],
+    // '@hotwired/stimulus' => [
+    //     'version' => '3.2.2',
+    // ],
+    // '@symfony/stimulus-bundle' => [
+    //     'path' => './vendor/symfony/stimulus-bundle/assets/dist/loader.js',
+    // ],
+    // 'vue' => [
+    //     'version' => '3.5.21',
+    //     'package_specifier' => 'vue/dist/vue.esm-bundler.js',
+    // ],
+    // '@vue/runtime-dom' => [
+    //     'version' => '3.5.21',
+    // ],
+    // '@vue/compiler-dom' => [
+    //     'version' => '3.5.21',
+    // ],
+    // '@vue/shared' => [
+    //     'version' => '3.5.21',
+    // ],
+    // '@vue/runtime-core' => [
+    //     'version' => '3.5.21',
+    // ],
+    // '@vue/compiler-core' => [
+    //     'version' => '3.5.21',
+    // ],
+    // '@vue/reactivity' => [
+    //     'version' => '3.5.21',
+    // ],
+    // '@symfony/ux-vue' => [
+    //     'path' => './vendor/symfony/ux-vue/assets/dist/loader.js',
+    // ],
 ];

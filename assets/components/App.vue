@@ -40,7 +40,7 @@ const items = [
             </template>
         </Menubar>
 
-        <main class="p-6">
+        <main class="lg:p-6">
             <RouterView />
         </main>
         <Toast />

@@ -24,10 +24,12 @@ async function load() {
     loading.value = true;
     error.value = "";
     try {
-        const res = await fetch("/api/products/random");
+        const res = await fetch("/api/products/random", {
+            headers: { Accept: "application/ld+json" },
+        });
         if (!res.ok) throw new Error("API error");
         const data = await res.json();
-        items.value = data.items ?? [];
+        items.value = data["hydra:member"] ?? data.member ?? [];
     } catch (e) {
         console.error(e);
         error.value = "Nem sikerült betölteni az ajánlott termékeket.";

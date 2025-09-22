@@ -119,7 +119,6 @@ import Button from "primevue/button";
 import Image from "primevue/image";
 import Skeleton from "primevue/skeleton";
 import Message from "primevue/message";
-import InputNumber from "primevue/inputnumber";
 import { useCart } from "../composables/useCart";
 
 const { add } = useCart();
@@ -153,9 +152,12 @@ async function load() {
     loading.value = true;
     error.value = "";
     try {
-        const res = await fetch(`/api/products/${route.params.id}`);
+        const res = await fetch(`/api/products/${route.params.id}`, {
+            headers: { Accept: "application/ld+json" },
+        });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        p.value = await res.json();
+        const data = await res.json();
+        p.value = data;
     } catch (e) {
         error.value = "Nem található a termék.";
         toast.add({

@@ -3,14 +3,45 @@
 namespace App\Entity;
 
 use App\Repository\ProductRepository;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
+
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Delete;
+
+use App\ApiResource\Filter\ProductNameDerivedFilter;
+use App\ApiResource\State\RandomProductsProvider;
+use App\ApiResource\Filter\GlobalSearchFilter;
+use App\ApiResource\Filter\RelevanceOrderFilter;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 #[ORM\Table(name: "product", indexes: [
     new ORM\Index(name: "idx_product_category", columns: ["category_id"]),
     new ORM\Index(name: "idx_product_identifier", columns: ["identifier"])
 ])]
+#[ApiResource(operations: [
+    new GetCollection(),
+    new GetCollection(
+        uriTemplate: '/products/random',
+        provider: RandomProductsProvider::class
+    ),
+    new Get(),
+    new Post(),
+    new Patch(),
+    new Delete(),
+])]
+#[ApiFilter(OrderFilter::class, properties: ['price', 'createdAt', 'name'])]
+#[ApiFilter(\ApiPlatform\Doctrine\Orm\Filter\SearchFilter::class, properties: ['category.id' => 'exact'])]
+#[ApiFilter(GlobalSearchFilter::class)]
+#[ApiFilter(RelevanceOrderFilter::class)]
+#[ApiFilter(ProductNameDerivedFilter::class)]
 class Product
 {
     #[ORM\Id]

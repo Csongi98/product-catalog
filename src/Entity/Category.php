@@ -6,11 +6,13 @@ use App\Repository\CategoryRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use ApiPlatform\Metadata\ApiResource;
 
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
 #[ORM\Table(name: "category", indexes: [
     new ORM\Index(name: "idx_category_external_id", columns: ["external_id"])
 ])]
+#[ApiResource]
 class Category
 {
     #[ORM\Id]
