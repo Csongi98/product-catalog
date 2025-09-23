@@ -24,9 +24,15 @@ const items = [
 </script>
 
 <template>
+    <!-- 
+      Fő komponens szerkezet:
+      - Menubar: felső navigáció
+      - Kosár gomb + darabszám badge
+      - RouterView: az aktuális oldal tartalma
+      - Toast: üzenetek kijelzésére
+    -->
     <div>
         <Menubar :model="items" class="shadow-sm">
-            <!-- Jobb oldal (kosár ikon) -->
             <template #end>
                 <RouterLink to="/cart" class="relative">
                     <Button icon="pi pi-shopping-cart" text rounded />

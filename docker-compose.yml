@@ -15,6 +15,7 @@ services:
             MAILER_DSN: smtp://mailhog:1025
             MAILER_FROM: no-reply@product-catalog.test
             MAILER_INTERNAL: orders@product-catalog.test
+            IMPORT_CSV: /var/www/html/var/data/products.csv
 
     db:
         image: mysql:8.0
@@ -50,4 +51,4 @@ services:
             - php
 
 volumes:
-    db_data:
+    db_data: {}

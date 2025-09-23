@@ -1,16 +1,11 @@
-<script setup>
-import { useCart } from "../composables/useCart";
-import { toFt } from "../utils/format";
-import Button from "primevue/button";
-import InputNumber from "primevue/inputnumber";
-import Card from "primevue/card";
-import Message from "primevue/message";
-import { RouterLink } from "vue-router";
-
-const { items, remove, setQty, clear, total } = useCart();
-</script>
-
 <template>
+    <!-- 
+      Kosár oldal felépítése:
+      - Cím
+      - Ha üres: információs üzenet + link vissza a katalógushoz
+      - Ha van termék: terméklista kártyákban + kosár műveletek
+      - Oldalsáv összegzéssel és tovább lépéssel a pénztárhoz
+    -->
     <div class="max-w-5xl mx-auto space-y-4">
         <h1 class="text-2xl font-semibold text-center pt-4">Kosár</h1>
 
@@ -115,6 +110,18 @@ const { items, remove, setQty, clear, total } = useCart();
         </div>
     </div>
 </template>
+
+<script setup>
+import { useCart } from "../composables/useCart";
+import { toFt } from "../utils/format";
+import Button from "primevue/button";
+import InputNumber from "primevue/inputnumber";
+import Card from "primevue/card";
+import Message from "primevue/message";
+import { RouterLink } from "vue-router";
+
+const { items, remove, setQty, clear, total } = useCart();
+</script>
 
 <style scoped>
 .line-clamp-2 {

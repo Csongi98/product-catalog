@@ -1,9 +1,21 @@
 <template>
     <div class="max-w-6xl mx-auto">
+        <!--
+          Hibaüzenet
+          Input: error (string)
+          Output: Message komponens
+          Funkció: API hiba jelzése a felhasználónak
+        -->
         <Message v-if="error" severity="error" class="mb-4">
             {{ error }}
         </Message>
 
+        <!--
+          Betöltés állapot skeletonokkal
+          Input: loading (boolean)
+          Output: Skeleton komponensek
+          Funkció: vizuális visszajelzés adatbetöltés közben
+        -->
         <div v-else-if="loading" class="grid grid-cols-1 lg:grid-cols-5 gap-6">
             <div class="lg:col-span-2">
                 <Skeleton height="28rem" class="rounded-2xl" />
@@ -19,6 +31,12 @@
             </div>
         </div>
 
+        <!--
+          Termék részletek
+          Input: p (termék objektum)
+          Output: termék képe, neve, ára, leírása, kosárba gomb
+          Funkció: a kiválasztott termék teljes adatainak megjelenítése
+        -->
         <div v-else-if="p" class="grid grid-cols-1 lg:grid-cols-5 gap-6">
             <Card
                 class="lg:col-span-2 rounded-2xl flex items-center justify-center w-full"
@@ -70,12 +88,6 @@
                                 icon="pi pi-shopping-cart"
                                 label="Kosárba"
                                 @click="addToCart(p)"
-                            />
-                            <Button
-                                icon="pi pi-heart"
-                                label="Kedvencek"
-                                severity="secondary"
-                                outlined
                             />
                         </div>
                     </template>
@@ -131,6 +143,11 @@ const loading = ref(true);
 const error = ref("");
 const p = ref(null);
 
+/*
+  Ár formázás (Ft)
+  Input: cents (szám fillérben)
+  Output: pl. "1 200 Ft"
+*/
 function toFt(cents) {
     if (cents == null) return "";
     return (
@@ -138,6 +155,12 @@ function toFt(cents) {
     );
 }
 
+/*
+  Kosárhoz adás
+  Input: product objektum
+  Output: toast értesítés
+  Funkció: adott termék 1 db mennyiséggel a kosárhoz adása
+*/
 function addToCart(product) {
     add(product, 1);
     toast.add({
@@ -148,6 +171,12 @@ function addToCart(product) {
     });
 }
 
+/*
+  Termék betöltése API-ból
+  Input: route.params.id
+  Output: p (termék objektum) feltöltése
+  Funkció: GET /api/products/:id, hibakezelés toast értesítéssel
+*/
 async function load() {
     loading.value = true;
     error.value = "";

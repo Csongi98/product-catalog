@@ -1,132 +1,3 @@
-<script setup>
-import { ref } from "vue";
-import { useCart } from "../composables/useCart";
-import { toFt } from "../utils/format";
-
-import InputText from "primevue/inputtext";
-import Button from "primevue/button";
-import Message from "primevue/message";
-import Card from "primevue/card";
-import Divider from "primevue/divider";
-import { useToast } from "primevue/usetoast";
-import FloatLabel from "primevue/floatlabel";
-
-const toast = useToast();
-const { items, total, clear } = useCart();
-
-const name = ref("");
-const email = ref("");
-const zip = ref("");
-const city = ref("");
-const address = ref("");
-const phone = ref("");
-const loading = ref(false);
-const ok = ref(false);
-const err = ref("");
-
-async function submit() {
-    err.value = "";
-    ok.value = false;
-
-    if (!items.value.length) {
-        err.value = "A kosár üres.";
-        return;
-    }
-    if (!name.value?.trim()) {
-        err.value = "A név megadása kötelező.";
-        return;
-    }
-    if (!email.value?.trim()) {
-        err.value = "Az e-mail cím megadása kötelező.";
-        return;
-    }
-    if (!zip.value?.trim()) {
-        err.value = "Az irányítószám megadása kötelező.";
-        return;
-    }
-    if (!city.value?.trim()) {
-        err.value = "A város megadása kötelező.";
-        return;
-    }
-    if (!address.value?.trim()) {
-        err.value = "Az utca / házszám megadása kötelező.";
-        return;
-    }
-    if (!phone.value?.trim()) {
-        err.value = "A telefonszám megadása kötelező.";
-        return;
-    }
-
-    const phoneRegex = /^\+?[0-9]{6,20}$/;
-    if (!phoneRegex.test(phone.value)) {
-        err.value = "Érvénytelen telefonszám.";
-        return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.value)) {
-        err.value = "Érvénytelen e-mail cím.";
-        return;
-    }
-
-    loading.value = true;
-    try {
-        const res = await fetch("/api/checkout", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Accept: "application/ld+json",
-            },
-            body: JSON.stringify({
-                name: name.value,
-                email: email.value,
-                zip: zip.value,
-                city: city.value,
-                address: address.value,
-                phone: phone.value,
-                items: items.value.map((x) => ({
-                    id: x.id,
-                    name: x.name,
-                    price: x.price,
-                    qty: x.qty,
-                })),
-                total: total.value,
-            }),
-        });
-        if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            if (res.status === 422 && data.errors) {
-                err.value = data.errors
-                    .map((e) => `${e.field}: ${e.msg}`)
-                    .join(", ");
-            } else {
-                err.value = "Nem sikerült leadni a rendelést.";
-            }
-            return;
-        }
-        const data = await res.json();
-        ok.value = true;
-        toast.add({
-            severity: "success",
-            summary: "Rendelés leadva",
-            detail: `Rendelésszám: ${data.orderNo}`,
-            life: 4000,
-        });
-        clear();
-        name.value = "";
-        email.value = "";
-        zip.value = "";
-        city.value = "";
-        address.value = "";
-        phone.value = "";
-    } catch {
-        err.value = "Hálózati hiba.";
-    } finally {
-        loading.value = false;
-    }
-}
-</script>
-
 <template>
     <div class="items-center justify-center flex flex-col">
         <div class="space-y-4 max:sm:w-full sm:w-2/3">
@@ -239,6 +110,147 @@ async function submit() {
         </div>
     </div>
 </template>
+
+<script setup>
+import { ref } from "vue";
+import { useCart } from "../composables/useCart";
+import { toFt } from "../utils/format";
+
+import InputText from "primevue/inputtext";
+import Button from "primevue/button";
+import Message from "primevue/message";
+import Card from "primevue/card";
+import Divider from "primevue/divider";
+import { useToast } from "primevue/usetoast";
+import FloatLabel from "primevue/floatlabel";
+
+const toast = useToast();
+const { items, total, clear } = useCart();
+
+const name = ref("");
+const email = ref("");
+const zip = ref("");
+const city = ref("");
+const address = ref("");
+const phone = ref("");
+const loading = ref(false);
+const ok = ref(false);
+const err = ref("");
+
+/* --- Űrlap submit ---
+   Input: vásárlói adatok + kosár
+   Output: POST /api/checkout
+   Funkció: validálja a mezőket, elküldi az adatokat a backendnek,
+   siker esetén visszajelzést ad és kiüríti a kosarat.
+*/
+async function submit() {
+    err.value = "";
+    ok.value = false;
+
+    if (!items.value.length) {
+        err.value = "A kosár üres.";
+        return;
+    }
+    if (!name.value?.trim()) {
+        err.value = "A név megadása kötelező.";
+        return;
+    }
+    if (!email.value?.trim()) {
+        err.value = "Az e-mail cím megadása kötelező.";
+        return;
+    }
+    if (!zip.value?.trim()) {
+        err.value = "Az irányítószám megadása kötelező.";
+        return;
+    }
+
+    if (!/^\d+$/.test(zip.value.trim())) {
+        err.value = "Az irányítószám csak szám lehet.";
+        return;
+    }
+
+    if (!city.value?.trim()) {
+        err.value = "A város megadása kötelező.";
+        return;
+    }
+    if (!address.value?.trim()) {
+        err.value = "Az utca / házszám megadása kötelező.";
+        return;
+    }
+    if (!phone.value?.trim()) {
+        err.value = "A telefonszám megadása kötelező.";
+        return;
+    }
+
+    const phoneRegex = /^\+?[0-9]{6,20}$/;
+    if (!phoneRegex.test(phone.value)) {
+        err.value = "Érvénytelen telefonszám.";
+        return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.value)) {
+        err.value = "Érvénytelen e-mail cím.";
+        return;
+    }
+
+    loading.value = true;
+    try {
+        const res = await fetch("/api/checkout", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "application/ld+json",
+            },
+            body: JSON.stringify({
+                name: name.value,
+                email: email.value,
+                zip: zip.value,
+                city: city.value,
+                address: address.value,
+                phone: phone.value,
+                items: items.value.map((x) => ({
+                    id: x.id,
+                    name: x.name,
+                    price: x.price,
+                    qty: x.qty,
+                })),
+                total: total.value,
+            }),
+        });
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            if (res.status === 422 && data.errors) {
+                err.value = data.errors
+                    .map((e) => `${e.field}: ${e.msg}`)
+                    .join(", ");
+            } else {
+                err.value = "Nem sikerült leadni a rendelést.";
+            }
+            return;
+        }
+        const data = await res.json();
+        ok.value = true;
+        toast.add({
+            severity: "success",
+            summary: "Rendelés leadva",
+            detail: `Rendelésszám: ${data.orderNo}`,
+            life: 4000,
+        });
+        clear();
+        name.value = "";
+        email.value = "";
+        zip.value = "";
+        city.value = "";
+        address.value = "";
+        phone.value = "";
+    } catch {
+        err.value = "Hálózati hiba.";
+    } finally {
+        loading.value = false;
+    }
+}
+</script>
 
 <style scoped>
 .line-clamp-2 {

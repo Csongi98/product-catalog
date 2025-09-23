@@ -1,4 +1,11 @@
 <template>
+    <!-- 
+      Termékek oldal felépítése:
+      - Cím
+      - Szűrőgombok (összes termék / kategóriák)
+      - Oldalsáv (desktop) vagy Sidebar (mobil) kategóriaválasztáshoz
+      - Terméklista rácsban
+    -->
     <div class="">
         <div class="flex items-center gap-3 py-4">
             <h1 class="text-xl md:text-2xl font-semibold w-full text-center">

@@ -18,11 +18,23 @@ use Symfony\Component\Console\Style\SymfonyStyle;
     name: 'app:import-products',
     description: 'Import products from CSV; adatok a 2. sortól, soronként a teljes sor (A..Z) összefűzve, majd ; szerint bontva.'
 )]
+/*
+ * Console parancs: termékek importálása CSV-ből.
+ * Input: CSV fájl útvonal (arg), delimiter (opció), --dry-run, --truncate
+ * Output: siker/hiba státusz + összegzés a kimenetre
+ * Funkció: soronként beolvassa a CSV-t, kategória-hierarchiát létrehozza/keresi,
+ *          termék entitásokat hoz létre és ment (vagy dry-run esetén csak szimulál).
+ */
 class ImportProductsCommand extends Command
 {
-    /** Egyszerű in-memory cache: "<parentId>|<name>" => Category */
     private array $categoryCache = [];
 
+    /*
+     * Konstruktor
+     * Input: EntityManagerInterface (ORM mentés/keresés), Connection (nyers SQL)
+     * Output: példány inicializálása
+     * Funkció: függőségek injektálása
+     */
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly Connection $conn,
@@ -30,6 +42,12 @@ class ImportProductsCommand extends Command
         parent::__construct();
     }
 
+    /*
+     * Parancs konfiguráció
+     * Input: CLI argumentumok/opciók definíciója
+     * Output: Symfony Console runtime számára beállított parancs-séma
+     * Funkció: kötelező csv argumentum, opcionális delimiter/dry-run/truncate
+     */
     protected function configure(): void
     {
         $this
@@ -39,6 +57,13 @@ class ImportProductsCommand extends Command
             ->addOption('truncate', null, InputOption::VALUE_NONE, 'Import előtt ürítse a product és category táblát (FIGYELEM!)');
     }
 
+    /*
+     * Fő végrehajtás
+     * Input: InputInterface (CLI arg/opt), OutputInterface (kimenet)
+     * Output: Command::SUCCESS / Command::FAILURE (exit code)
+     * Funkció: CSV megnyitása, opcionális táblatisztítás, soronkénti feldolgozás,
+     *          tranzakció kezelése, összegzés kiírása.
+     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io        = new SymfonyStyle($input, $output);
@@ -164,6 +189,12 @@ class ImportProductsCommand extends Command
         }
     }
 
+      /*
+     * CSV cellák biztonságos összefűzése adott delimiterrel.
+     * Input: $cells (string[]), $del (string)
+     * Output: egyetlen sor-string, normalizált delimiterekkel (BOM levágva)
+     * Funkció: Excel/CSV anomáliák kezelése (felesleges elválasztók, BOM)
+     */
     private function joinCellsWithDelimiter(array $cells, string $del = ';'): string
     {
         $out = '';
@@ -195,7 +226,12 @@ class ImportProductsCommand extends Command
         return trim($out);
     }
 
-
+     /*
+     * Breadcrumb ("A > B > C") darabolása tömbbé.
+     * Input: $breadcrumb (string|null)
+     * Output: string[] (legalább ["Ismeretlen"])
+     * Funkció: kategóriaútvonal normalizálása/üres érték kezelése
+     */
     private function breadcrumbToParts(?string $breadcrumb): array
     {
         if (!$breadcrumb) {
@@ -206,7 +242,12 @@ class ImportProductsCommand extends Command
         return $parts ?: ['Ismeretlen'];
     }
 
-
+    /*
+     * Kategórialánc megkeresése vagy létrehozása a megadott szegmensekből.
+     * Input: $parts (string[]), $repoCategory (Category repository)
+     * Output: Category|null (a legalsó "leaf" kategória)
+     * Funkció: szülő-gyerek hierarchia lépcsőzetes felépítése, cache használatával.
+     */
     private function findOrCreateCategoryChain(array $parts, $repoCategory): ?Category
     {
         $parent = null;

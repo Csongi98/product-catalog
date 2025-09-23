@@ -1,3 +1,22 @@
+<template>
+    <div class="rounded-2xl border shadow-sm bg-white p-3">
+        <div class="text-lg font-semibold mb-3">Kategóriák</div>
+
+        <div v-if="error" class="text-sm text-red-600 flex items-center gap-3">
+            {{ error }}
+            <Button label="Próbáld újra" text @click="load" />
+        </div>
+
+        <div v-else-if="loading" class="space-y-2">
+            <Skeleton height="2rem" />
+            <Skeleton height="2rem" />
+            <Skeleton height="2rem" />
+        </div>
+
+        <PanelMenu v-else :model="model" multiple class="w-full" />
+    </div>
+</template>
+
 <script setup>
 import { ref, onMounted } from "vue";
 import PanelMenu from "primevue/panelmenu";
@@ -14,9 +33,12 @@ const model = ref([]);
 const loading = ref(true);
 const error = ref("");
 
-const fileIcon = "pi pi-file";
+const fileIcon = "pi pi-circle";
 const folderIcon = "pi pi-folder";
 
+/* --- API betöltés és menü modell építése ---
+Input: props.path vagy gyökér
+Output: model feltöltve PanelMenu struktúrával */
 async function load() {
     loading.value = true;
     error.value = "";
@@ -79,22 +101,3 @@ async function load() {
 
 onMounted(load);
 </script>
-
-<template>
-    <div class="rounded-2xl border shadow-sm bg-white p-3">
-        <div class="text-lg font-semibold mb-3">Kategóriák</div>
-
-        <div v-if="error" class="text-sm text-red-600 flex items-center gap-3">
-            {{ error }}
-            <Button label="Próbáld újra" text @click="load" />
-        </div>
-
-        <div v-else-if="loading" class="space-y-2">
-            <Skeleton height="2rem" />
-            <Skeleton height="2rem" />
-            <Skeleton height="2rem" />
-        </div>
-
-        <PanelMenu v-else :model="model" multiple class="w-full" />
-    </div>
-</template>
